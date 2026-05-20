@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlockVote — Hệ Thống Bầu Cử Blockchain</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ╔══════════════════════════════════════╗ -->
+  <!-- ║     ANIMATED BACKGROUND ORBS         ║ -->
+  <!-- ╚══════════════════════════════════════╝ -->
+  <div class="bg-canvas" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <!-- ╔══════════════════════════════════════╗ -->
+  <!-- ║              NAVBAR                  ║ -->
+  <!-- ╚══════════════════════════════════════╝ -->
+  <nav class="navbar sticky-top navbar-glass" id="mainNavbar">
+    <div class="container-fluid px-4">
+
+      <!-- Brand -->
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+        <div class="brand-icon">
+          <i class="fas fa-cube"></i>
+        </div>
+        <span class="fw-800">Block<span class="text-accent">Vote</span></span>
+      </a>
+
+      <!-- Network & Account -->
+      <div class="d-flex align-items-center gap-3">
+
+        <!-- Network Badge -->
+        <div id="networkBadge" class="net-badge d-none">
+          <span class="net-dot"></span>
+          <span id="networkName">Hardhat Local</span>
+        </div>
+
+        <!-- Disconnected: Connect Button -->
+        <button id="connectBtn" class="btn-wallet" onclick="connectWallet()">
+          <i class="fas fa-wallet"></i>
+          <span>Kết nối ví</span>
+        </button>
+
+        <!-- Connected: Account Chip (hidden initially) -->
+        <div id="accountChip" class="account-chip d-none" title="Để đổi tài khoản: Mở MetaMask → Click tên tài khoản hiện tại → Chọn tài khoản khác">
+          <div class="acct-avatar" id="acctAvatar"></div>
+          <div class="acct-info">
+            <span id="acctAddr" class="acct-addr">0x0000...0000</span>
+            <span id="adminTag" class="badge-admin d-none">
+              <i class="fas fa-crown"></i> Admin
+            </span>
+          </div>
+          <button class="btn-switch-account" onclick="showSwitchAccountTip()" title="Đổi tài khoản">
+            <i class="fas fa-exchange-alt"></i>
+          </button>
+          <button class="btn-disconnect" onclick="disconnectWallet()" title="Ngắt kết nối">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </nav>
+
+  <!-- ╔══════════════════════════════════════╗ -->
+  <!-- ║           MAIN CONTENT               ║ -->
+  <!-- ╚══════════════════════════════════════╝ -->
+  <main class="main-content">
+
+    <!-- ── Hero Section ─────────────────────────────────────── -->
+    <section class="hero-section">
+      <div class="container text-center">
+
+        <!-- Status Badge -->
+        <div class="status-pill-wrap mb-3">
+          <span class="status-pill" id="statusPill">
+            <span class="status-dot-anim"></span>
+            <span id="statusText">Đang tải...</span>
+          </span>
+        </div>
+
+        <!-- Election Title -->
+        <h1 class="hero-title" id="electionTitle">
+          <span class="gradient-text">Hệ Thống Bầu Cử</span><br />
+          <span class="gradient-text">Trên Blockchain</span>
+        </h1>
+        <p class="hero-sub">Bầu cử phi tập trung · Minh bạch · Bất biến · Bảo mật tuyệt đối</p>
+
+        <!-- Stats Row -->
+        <div class="stats-row mt-5">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-value counter-val" id="statTotal">0</div>
+            <div class="stat-label">Tổng phiếu bầu</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-value" id="statCandidates">—</div>
+            <div class="stat-label">Ứng viên</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-user-shield"></i></div>
+            <div class="stat-value" id="statMyStatus">—</div>
+            <div class="stat-label">Trạng thái của bạn</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <div class="container pb-5">
+
+      <!-- ── MetaMask Not Installed ──────────────────────────── -->
+      <div id="noMetaMask" class="d-none">
+        <div class="notice-card notice-danger mb-5">
+          <div class="notice-icon"><i class="fab fa-ethereum"></i></div>
+          <div>
+            <h4 class="fw-700 mb-1">MetaMask chưa được cài đặt</h4>
+            <p class="mb-3 text-muted">Bạn cần cài tiện ích MetaMask vào trình duyệt Chrome/Firefox để sử dụng hệ thống bầu cử này.</p>
+            <a href="https://metamask.io/download/" target="_blank" class="btn-primary-glass">
+              <i class="fas fa-download me-2"></i>Cài đặt MetaMask
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Connect Wallet Notice ───────────────────────────── -->
+      <div id="connectNotice" class="mb-5">
+        <div class="notice-card notice-connect text-center">
+          <div class="notice-big-icon">
+            <i class="fas fa-wallet"></i>
+          </div>
+          <h3 class="fw-700 mb-2">Kết nối ví để tham gia bầu cử</h3>
+          <p class="text-muted mb-4">Kết nối MetaMask với mạng <strong>Hardhat Localhost (Chain ID: 31337)</strong> để bỏ phiếu hoặc quản lý bầu cử</p>
+          <button class="btn-wallet btn-wallet-lg" onclick="connectWallet()">
+            <i class="fas fa-plug me-2"></i>Kết nối MetaMask ngay
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Admin Panel (only visible for owner) ───────────── -->
+      <div id="adminPanel" class="admin-panel mb-5 d-none">
+        <div class="admin-panel-header">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-shield-halved text-warning"></i>
+            <span class="fw-700">Bảng Điều Khiển Admin</span>
+          </div>
+          <span class="badge bg-warning text-dark fw-600">
+            <i class="fas fa-crown me-1"></i>Contract Owner
+          </span>
+        </div>
+
+        <div class="admin-panel-body">
+          <div class="row g-4">
+
+            <!-- Add Candidate -->
+            <div class="col-lg-4 col-md-6">
+              <div class="admin-card">
+                <div class="admin-card-icon" style="background: #4f46e5">
+                  <i class="fas fa-user-plus"></i>
+                </div>
+                <h6 class="admin-card-title">Thêm Ứng Viên</h6>
+                <input type="text" id="inputCandName" class="form-glass mb-2" placeholder="Tên đầy đủ ứng viên" />
+                <textarea id="inputCandDesc" class="form-glass mb-3" rows="2" placeholder="Mô tả ngắn về ứng viên..."></textarea>
+                <button class="btn-admin-action w-100" style="--color:#6366f1" onclick="addCandidate()">
+                  <i class="fas fa-plus me-2"></i>Thêm ứng viên
+                </button>
+              </div>
+            </div>
+
+            <!-- Whitelist Voter -->
+            <div class="col-lg-4 col-md-6">
+              <div class="admin-card">
+                <div class="admin-card-icon" style="background: #10b981">
+                  <i class="fas fa-user-check"></i>
+                </div>
+                <h6 class="admin-card-title">Cấp Quyền Bầu Cử</h6>
+                <input type="text" id="inputVoterAddr" class="form-glass mb-2" placeholder="Địa chỉ ví cử tri: 0x..." />
+                <p class="text-muted small mb-3">Nhập địa chỉ ví Ethereum của cử tri cần cấp quyền</p>
+                <button class="btn-admin-action w-100" style="--color:#10b981" onclick="whitelistVoter()">
+                  <i class="fas fa-unlock me-2"></i>Cấp quyền ngay
+                </button>
+              </div>
+            </div>
+
+            <!-- Election Control -->
+            <div class="col-lg-4 col-md-12">
+              <div class="admin-card">
+                <div class="admin-card-icon" style="background: #f59e0b">
+                  <i class="fas fa-sliders"></i>
+                </div>
+                <h6 class="admin-card-title">Điều Khiển Bầu Cử</h6>
+                <p class="text-muted small mb-3">Cần ít nhất <strong>2 ứng viên</strong> để bắt đầu bầu cử.</p>
+                <button class="btn-admin-action w-100 mb-2" style="--color:#10b981" id="btnStartElection" onclick="startElection()">
+                  <i class="fas fa-play me-2"></i>Bắt đầu bầu cử
+                </button>
+                <button class="btn-admin-action w-100" style="--color:#ef4444" id="btnEndElection" onclick="endElection()">
+                  <i class="fas fa-stop me-2"></i>Kết thúc bầu cử
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Voter Status Bar ────────────────────────────────── -->
+      <div id="voterStatusBar" class="voter-status-bar mb-4 d-none">
+        <div id="vsNotWhitelisted" class="vs-item vs-warning d-none">
+          <i class="fas fa-lock me-2"></i>
+          <span>Tài khoản của bạn chưa được Admin cấp quyền bầu cử. Vui lòng liên hệ Admin.</span>
+        </div>
+        <div id="vsWhitelisted" class="vs-item vs-success d-none">
+          <i class="fas fa-check-circle me-2"></i>
+          <span>Tài khoản của bạn đã được cấp quyền bầu cử. Chọn ứng viên và bỏ phiếu bên dưới!</span>
+        </div>
+        <div id="vsAlreadyVoted" class="vs-item vs-info d-none">
+          <i class="fas fa-vote-yea me-2"></i>
+          <span id="vsAlreadyVotedText">Bạn đã bỏ phiếu cho <strong>—</strong>. Cảm ơn bạn đã tham gia!</span>
+        </div>
+        <div id="vsEnded" class="vs-item vs-purple d-none">
+          <i class="fas fa-flag-checkered me-2"></i>
+          <span>Cuộc bầu cử đã kết thúc. Xem kết quả phía dưới.</span>
+        </div>
+      </div>
+
+      <!-- ── Candidates Section ──────────────────────────────── -->
+      <section class="mb-5">
+        <div class="section-header mb-4">
+          <h2 class="section-title">
+            <i class="fas fa-users me-2"></i>Danh Sách Ứng Viên
+          </h2>
+          <div class="section-line"></div>
+          <span class="section-count" id="sectionCandCount"></span>
+        </div>
+
+        <div id="candidatesGrid" class="row g-4">
+          <!-- Skeleton loading -->
+          <div class="col-12 text-center py-5" id="candidatesSkeleton">
+            <div class="spinner-wrap">
+              <div class="spin-ring"></div>
+            </div>
+            <p class="mt-3 text-muted">Đang tải danh sách ứng viên...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Results Section (shown after election ends) ─────── -->
+      <section id="resultsSection" class="mb-5 d-none">
+        <div class="section-header mb-4">
+          <h2 class="section-title">
+            <i class="fas fa-trophy me-2 text-warning"></i>Kết Quả Bầu Cử
+          </h2>
+          <div class="section-line"></div>
+        </div>
+
+        <!-- Winner Box -->
+        <div id="winnerBox" class="winner-box mb-4 text-center">
+          <!-- populated by JS -->
+        </div>
+
+        <!-- Detailed ranking -->
+        <div class="results-card">
+          <div class="results-header">
+            <i class="fas fa-chart-bar me-2"></i>Bảng Xếp Hạng Chi Tiết
+          </div>
+          <div id="resultsList" class="results-list">
+            <!-- populated by JS -->
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /.container -->
+  </main>
+
+  <!-- ╔══════════════════════════════════════╗ -->
+  <!-- ║             FOOTER                   ║ -->
+  <!-- ╚══════════════════════════════════════╝ -->
+  <footer class="site-footer">
+    <div class="container text-center">
+      <p class="mb-1">
+        <i class="fas fa-cube me-1"></i>
+        <strong>BlockVote</strong> — Hệ thống bầu cử phi tập trung trên Blockchain Ethereum
+      </p>
+      <p class="text-muted small">Powered by Solidity · Hardhat · Ethers.js · MetaMask · Bootstrap 5</p>
+    </div>
+  </footer>
+
+  <!-- ╔══════════════════════════════════════╗ -->
+  <!-- ║         TOAST NOTIFICATIONS          ║ -->
+  <!-- ╚══════════════════════════════════════╝ -->
+  <div id="toastContainer" class="toast-stack" aria-live="polite"></div>
+
+  <!-- ╔══════════════════════════════════════╗ -->
+  <!-- ║       TRANSACTION LOADING MODAL      ║ -->
+  <!-- ╚══════════════════════════════════════╝ -->
+  <div class="modal fade" id="txModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content modal-glass-card">
+        <div class="modal-body text-center py-5 px-4">
+          <div class="tx-loader mb-4">
+            <div class="tx-ring"></div>
+            <div class="tx-inner-icon"><i class="fas fa-cube"></i></div>
+          </div>
+          <h5 class="fw-700 mb-2" id="txModalTitle">Đang xử lý...</h5>
+          <p class="text-muted small mb-0" id="txModalDesc">Vui lòng xác nhận giao dịch trong MetaMask</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ╔══════════════════════════════════════╗ -->
+  <!-- ║        VOTE CONFIRM MODAL            ║ -->
+  <!-- ╚══════════════════════════════════════╝ -->
+  <div class="modal fade" id="voteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-glass-card">
+        <div class="modal-body p-4">
+          <div class="text-center mb-4">
+            <div class="confirm-icon mx-auto mb-3">
+              <i class="fas fa-vote-yea"></i>
+            </div>
+            <h4 class="fw-700">Xác nhận bỏ phiếu</h4>
+            <p class="text-muted">Bạn sắp bỏ phiếu cho ứng viên:</p>
+          </div>
+
+          <div class="confirm-candidate-box" id="confirmCandidateBox">
+            <!-- populated by JS -->
+          </div>
+
+          <div class="alert-glass mt-3">
+            <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+            <strong>Lưu ý:</strong> Phiếu bầu không thể thu hồi sau khi xác nhận. Mỗi cử tri chỉ được bỏ phiếu <strong>một lần duy nhất</strong>.
+          </div>
+
+          <div class="d-flex gap-3 mt-4">
+            <button type="button" class="btn-glass-outline flex-fill" data-bs-dismiss="modal">
+              <i class="fas fa-times me-2"></i>Hủy
+            </button>
+            <button type="button" class="btn-primary-glass flex-fill" id="btnConfirmVote">
+              <i class="fas fa-check me-2"></i>Xác nhận bỏ phiếu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Ethers.js v5 (UMD) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <!-- App Logic -->
+  <script src="js/app.js"></script>
+
+  <!-- Switch Account Guide Modal -->
+  <div class="modal fade" id="switchAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-glass-card">
+        <div class="modal-body p-4">
+          <div class="text-center mb-4">
+            <div class="confirm-icon mx-auto mb-3" style="background:#10b981">
+              <i class="fas fa-exchange-alt"></i>
+            </div>
+            <h4 class="fw-700">Cách đổi tài khoản</h4>
+            <p class="text-muted small">Để bỏ phiếu với tài khoản khác (cử tri), làm theo các bước sau:</p>
+          </div>
+          <div class="switch-steps">
+            <div class="switch-step">
+              <div class="step-num">1</div>
+              <div>Bấm vào <strong>biểu tượng MetaMask</strong> (con cáo cam) trên thanh công cụ trình duyệt</div>
+            </div>
+            <div class="switch-step">
+              <div class="step-num">2</div>
+              <div>Nhấp vào <strong>tên tài khoản / địa chỉ</strong> hiển thị phía trên cùng trong cửa sổ MetaMask</div>
+            </div>
+            <div class="switch-step">
+              <div class="step-num">3</div>
+              <div>Chọn tài khoản khác từ danh sách (ví dụ: <strong>Account 2</strong> để bỏ phiếu với tư cách cử tri)</div>
+            </div>
+            <div class="switch-step">
+              <div class="step-num">4</div>
+              <div>Trang web sẽ <strong>tự động cập nhật</strong> — không cần F5 hay kết nối lại</div>
+            </div>
+          </div>
+          <div class="alert-glass mt-3" style="color:#3730a3;">
+            <i class="fas fa-info-circle me-2"></i>
+            <span><strong>Tài khoản #0</strong> = Admin (deploy contract) &nbsp;·&nbsp; <strong>Tài khoản #1–#9</strong> = Cử tri đã được cấp quyền</span>
+          </div>
+          <div class="alert-glass mt-2" style="color:#92400e;">
+            <i class="fas fa-key me-2"></i>
+            Import tài khoản vào MetaMask: <strong>MetaMask → Biểu tượng tài khoản → Import account → Dán Private Key</strong> từ terminal <code>npx hardhat node</code>
+          </div>
+          <button type="button" class="btn-primary-glass w-100 mt-4" data-bs-dismiss="modal">
+            <i class="fas fa-check me-2"></i>Đã hiểu
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "voting-dapp",
+  "version": "1.0.0",
+  "description": "Hệ thống bầu cử phi tập trung sử dụng công nghệ Blockchain",
+  "scripts": {
+    "node": "npx hardhat node",
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat run scripts/deploy.js --network localhost",
+    "test": "npx hardhat test",
+    "clean": "npx hardhat clean"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "hardhat": "^2.19.0"
+  },
+  "keywords": ["blockchain", "voting", "ethereum", "solidity", "dapp"],
+  "author": "BlockVote",
+  "license": "MIT"
+}
